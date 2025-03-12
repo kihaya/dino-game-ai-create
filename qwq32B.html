@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Three.js Dino Game</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.153/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.153/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+    // 游戏参数
+    const canvasWidth = window.innerWidth;
+    const canvasHeight = window.innerHeight;
+
+    let scene, camera, renderer, controls;
+    let ground, dino, obstacles = [];
+    let score = 0;
+    let isGameOver = false;
+    let jumpForce = 5;
+    let gravity = 0.1;
+    let velocityY = 0;
+    let obstacleSpeed = -2;
+
+    // 初始化 Three.js
+    init();
+    animate();
+
+    function init() {
+        // 场景、相机和渲染器
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, canvasWidth / canvasHeight, 0.1, 1000);
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(canvasWidth, canvasHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // 地面
+        const groundGeometry = new THREE.BoxGeometry(50, 0.5, 1);
+        const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x33cc33 });
+        ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.position.y = -2;
+        scene.add(ground);
+
+        // 恐龙模型（简单立方体）
+        const dinoGeometry = new THREE.BoxGeometry(1, 2, 0.5);
+        const dinoMaterial = new THREE.MeshBasicMaterial({ color: 0xff6600 });
+        dino = new THREE.Mesh(dinoGeometry, dinoMaterial);
+        dino.position.set(-10, 1, 0); // 初始位置
+        scene.add(dino);
+
+        // 照明（环境光）
+        const light = new THREE.AmbientLight(0xffffff, 1);
+        scene.add(light);
+
+        // 相机初始位置
+        camera.position.z = 15;
+        camera.lookAt(scene.position);
+
+        // 输入控制
+        document.addEventListener('keydown', onKeyDown);
+    }
+
+    function onKeyDown(event) {
+        if (isGameOver) return;
+
+        if (event.code === 'Space' || event.code === 'ArrowUp') {
+            velocityY = jumpForce; // 跳跃
+        }
+    }
+
+    function createObstacle() {
+        const obstacleGeometry = new THREE.BoxGeometry(0.5, 1.5, 0.5);
+        const obstacleMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
+        obstacle.position.set(20 + Math.random() * 10, 1, 0); // 随机位置
+        obstacles.push(obstacle);
+        scene.add(obstacle);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // 游戏逻辑（跳跃和重力）
+        if (!isGameOver) {
+            velocityY -= gravity;
+            dino.position.y += velocityY;
+
+            // 碰撞地面
+            if (dino.position.y < 1) {
+                dino.position.y = 1;
+                velocityY = 0;
+            }
+
+            // 障碍物生成和移动
+            obstacles.forEach(obstacle => {
+                obstacle.position.x += obstacleSpeed;
+
+                // 检测碰撞（简单轴对齐包围盒检测）
+                if (
+                    obstacle.position.x + 0.25 > dino.position.x - 0.5 &&
+                    obstacle.position.x - 0.25 < dino.position.x + 0.5 &&
+                    obstacle.position.y + 0.75 > dino.position.y - 1 &&
+                    obstacle.position.y - 0.75 < dino.position.y + 1
+                ) {
+                    isGameOver = true;
+                }
+
+                // 移除超出屏幕的障碍物
+                if (obstacle.position.x < -20) {
+                    scene.remove(obstacle);
+                    obstacles.splice(obstacles.indexOf(obstacle), 1);
+                }
+            });
+
+            // 随机生成新障碍物
+            if (Math.random() > 0.98) createObstacle();
+
+            // 得分增加
+            score += 0.1;
+        }
+
+        renderer.render(scene, camera);
+    }
+</script>
+</body>
+</html>
