@@ -1,5 +1,11 @@
 ### dino game ai create
 
+#### prompt
+
+- Chrome のDinoゲームをご存知ですか？
+- もうちょっと詳細に仕様を説明してみてください
+- では、それをThree.js を使って2Dゲームとして実装してください。
+
 #### qwq32B (local)
 
 https://github.com/user-attachments/assets/f285333d-6ac4-4a6a-95a2-1762890d5f73
